@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinic Profile - {{ clinic.clinic_name }}{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS for Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+    #map {
+        height: 300px;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'clinic_search' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Back to Search</a>
+        <h3 class="fw-bold m-0">Clinic Directory Profile</h3>
+    </div>
+
+    <div class="row">
+        <!-- Main details -->
+        <div class="col-lg-8 mb-4">
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h2 class="fw-bold text-dark m-0">{{ clinic.clinic_name }}</h2>
+                        <p class="text-muted mb-0"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ clinic.address }}, {{ clinic.city }}</p>
+                    </div>
+                    <span class="badge bg-light text-info border fs-6 py-2 px-3"><i class="fa-solid fa-hourglass-half"></i> {{ clinic.estimated_wait_days }} Days Wait</span>
+                </div>
+                
+                <h5 class="fw-bold text-secondary small uppercase border-bottom pb-2 mb-3">Description</h5>
+                <p class="text-secondary leading-relaxed mb-4">
+                    {% if clinic.description %}
+                        {{ clinic.description }}
+                    {% else %}
+                        No description provided for this clinic.
+                    {% endif %}
+                </p>
+
+                <h5 class="fw-bold text-secondary small uppercase border-bottom pb-2 mb-3">Medical Specialties Provided</h5>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% for spec in clinic.specialties.all %}
+                        <span class="badge bg-light text-dark border fs-6 py-2 px-3">{{ spec.name }}</span>
+                    {% empty %}
+                        <span class="text-muted small">No specialties registered</span>
+                    {% endfor %}
+                </div>
+
+                <h5 class="fw-bold text-secondary small uppercase border-bottom pb-2 mb-3">Accepted Insurance Providers</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for ins in clinic.insurance_providers.all %}
+                        <span class="badge bg-light text-info border fs-6 py-2 px-3"><i class="fa-solid fa-shield me-1"></i> {{ ins.provider_name }}</span>
+                    {% empty %}
+                        <span class="text-muted small">No insurance providers registered</span>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% if user.role == 'DOCTOR' %}
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-file-invoice text-info me-2"></i>Refer Patient to this Clinic</h5>
+                <p class="text-muted small">Refer patients managed under your doctor profile directly to this specialist clinic. Queue rankings and medical matching are applied automatically.</p>
+                <a href="{% url 'referral_create' %}?clinic={{ clinic.id }}" class="btn btn-accent px-4 py-2 shadow-sm d-inline-block"><i class="fa-solid fa-paper-plane me-1"></i> Begin Referral Flow</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Maps and Contact details -->
+        <div class="col-lg-4 mb-4">
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white mb-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-address-book text-secondary me-2"></i>Contact Registry</h5>
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Phone Registry</span>
+                    <strong class="text-dark">{{ clinic.contact_number }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Administrative Officer</span>
+                    <strong class="text-dark">
+                        {% if clinic.admin %}
+                            {{ clinic.admin.first_name }} {{ clinic.admin.last_name }} (@{{ clinic.admin.username }})
+                        {% else %}
+                            System Managed
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="mb-0">
+                    <span class="text-muted small d-block">Joined Network</span>
+                    <strong class="text-dark">{{ clinic.created_at|date:"M d, Y" }}</strong>
+                </div>
+            </div>
+
+            <!-- Interactive Leaflet Map Card -->
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-map-location-dot text-secondary me-2"></i>Clinic Coordinates</h5>
+                <div id="map" class="mb-3"></div>
+                <div class="text-center small text-muted">
+                    <span>GPS: {{ clinic.latitude|stringformat:".4f" }}, {{ clinic.longitude|stringformat:".4f" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS for Map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Initialize Map centered at clinic coordinates
+        const lat = {{ clinic.latitude }};
+        const lng = {{ clinic.longitude }};
+        
+        const map = L.map('map').setView([lat, lng], 14);
+
+        // Load OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add Marker
+        L.marker([lat, lng]).addTo(map)
+            .bindPopup("<b>{{ clinic.clinic_name }}</b><br>{{ clinic.address }}")
+            .openPopup();
+    });
+</script>
+{% endblock %}

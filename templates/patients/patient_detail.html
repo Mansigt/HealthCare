@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Details - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'patient_list' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <h3 class="fw-bold m-0">Patient Details</h3>
+    </div>
+
+    <div class="row">
+        <!-- Patient Metadata Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card card-custom border-0 shadow-sm p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-id-card fa-3x text-secondary"></i>
+                    </div>
+                    <h5 class="fw-bold m-0">{{ patient.full_name }}</h5>
+                    <span class="badge bg-light text-dark border small mt-2">ID: PAT-{{ patient.id|stringformat:"05d" }}</span>
+                </div>
+                
+                <hr>
+                
+                <div class="text-start">
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Age / Gender</span>
+                        <strong>{{ patient.age }} years / {{ patient.get_gender_display }}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Phone Number</span>
+                        <strong>{{ patient.phone }}</strong>
+                    </div>
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Insurance Coverage</span>
+                        {% if patient.insurance_provider %}
+                            <span class="badge bg-light text-dark border"><i class="fa-solid fa-shield text-info me-1"></i> {{ patient.insurance_provider.provider_name }}</span>
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <span class="text-muted small d-block">Address</span>
+                        <strong>{{ patient.address }}</strong>
+                    </div>
+                    <div class="mb-0">
+                        <span class="text-muted small d-block">Registered Date</span>
+                        <strong>{{ patient.created_at|date:"M d, Y" }}</strong>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-flex gap-2 mt-2">
+                    <a href="{% url 'patient_edit' patient.id %}" class="btn btn-outline-secondary w-50 py-2"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                    <a href="{% url 'referral_create' %}?patient={{ patient.id }}" class="btn btn-accent w-50 py-2 shadow-sm"><i class="fa-solid fa-share-nodes"></i> Refer</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral History Table -->
+        <div class="col-lg-8 mb-4">
+            <div class="card card-custom border-0 shadow-sm p-4 h-100">
+                <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-file-waveform me-2"></i>Referral History</h5>
+                
+                {% if patient.referrals.all %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Referral Date</th>
+                                <th>Specialist Clinic</th>
+                                <th>Specialty</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in patient.referrals.all %}
+                            <tr>
+                                <td>{{ referral.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'clinic_detail' referral.clinic.id %}" class="fw-semibold text-dark text-decoration-none">
+                                        {{ referral.clinic.clinic_name }}
+                                    </a>
+                                </td>
+                                <td>{{ referral.specialty.name }}</td>
+                                <td>
+                                    {% if referral.status == 'PENDING' %}
+                                        <span class="badge badge-pending px-2 py-1 rounded-2">Pending</span>
+                                    {% elif referral.status == 'ACCEPTED' %}
+                                        <span class="badge badge-accepted px-2 py-1 rounded-2">Accepted</span>
+                                    {% elif referral.status == 'REJECTED' %}
+                                        <span class="badge badge-rejected px-2 py-1 rounded-2">Rejected</span>
+                                    {% elif referral.status == 'COMPLETED' %}
+                                        <span class="badge badge-completed px-2 py-1 rounded-2">Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'referral_detail' referral.id %}" class="btn btn-sm btn-light"><i class="fa-solid fa-eye"></i> View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-receipt fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No referrals recorded for this patient.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

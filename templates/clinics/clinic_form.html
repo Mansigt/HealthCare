@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit Clinic Profile{% else %}Register Clinic{% endif %} - Medical Referral Network{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'clinic_dashboard' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+                <h3 class="fw-bold m-0">{% if object %}Edit Clinic Profile{% else %}Register Clinic Profile{% endif %}</h3>
+            </div>
+            
+            <div class="card card-custom p-4 border border-0 shadow-sm mb-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-hospital-user me-2"></i>General Information</h5>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="id_clinic_name" class="form-label fw-medium">Clinic Name</label>
+                            {{ form.clinic_name }}
+                            {% if form.clinic_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.clinic_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="id_contact_number" class="form-label fw-medium">Contact Number</label>
+                            {{ form.contact_number }}
+                            {% if form.contact_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.contact_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_address" class="form-label fw-medium">Street Address</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <div class="text-danger small mt-1">{{ form.address.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_city" class="form-label fw-medium">City</label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                                <div class="text-danger small mt-1">{{ form.city.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <label for="id_latitude" class="form-label fw-medium">Latitude</label>
+                            {{ form.latitude }}
+                            {% if form.latitude.errors %}
+                                <div class="text-danger small mt-1">{{ form.latitude.errors }}</div>
+                            {% endif %}
+                            <div class="form-text small">e.g., 40.7128</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="id_longitude" class="form-label fw-medium">Longitude</label>
+                            {{ form.longitude }}
+                            {% if form.longitude.errors %}
+                                <div class="text-danger small mt-1">{{ form.longitude.errors }}</div>
+                            {% endif %}
+                            <div class="form-text small">e.g., -74.0060</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="id_estimated_wait_days" class="form-label fw-medium">Estimated Wait (Days)</label>
+                            {{ form.estimated_wait_days }}
+                            {% if form.estimated_wait_days.errors %}
+                                <div class="text-danger small mt-1">{{ form.estimated_wait_days.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_description" class="form-label fw-medium">Clinic Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4">
+
+                    <!-- Medical Specialties Selection -->
+                    <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-stethoscope me-2"></i>Medical Specialties</h5>
+                    <p class="text-muted small mb-3">Check all clinical specialties provided at your facility.</p>
+                    <div class="row mb-4 px-3">
+                        {% for spec in form.specialties %}
+                            <div class="col-md-4 mb-2 form-check">
+                                {{ spec }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Accepted Insurances Selection -->
+                    <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-shield-halved me-2"></i>Accepted Insurances</h5>
+                    <p class="text-muted small mb-3">Select the insurance networks accepted by your clinic.</p>
+                    <div class="row mb-4 px-3">
+                        {% for ins in form.insurance_providers %}
+                            <div class="col-md-4 mb-2 form-check">
+                                {{ ins }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-4">
+                    
+                    <button type="submit" class="btn btn-accent px-5 py-2.5 shadow-sm">
+                        {% if object %}Save Changes{% else %}Register Clinic Profile{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styling checkbox lists for cleaner grid presentation */
+    .form-check {
+        padding-left: 2em;
+    }
+    .form-check-input {
+        float: left;
+        margin-left: -2em;
+        border: 1.5px solid #cbd5e1;
+        width: 1.25em;
+        height: 1.25em;
+    }
+    .form-check-input:checked {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+    .form-check-label {
+        font-size: 0.95rem;
+        color: var(--text-dark);
+        cursor: pointer;
+    }
+</style>
+{% endblock %}

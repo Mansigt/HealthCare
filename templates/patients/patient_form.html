@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit Patient{% else %}Register Patient{% endif %} - Medical Referral Network{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'patient_list' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                <h3 class="fw-bold m-0">{% if object %}Edit Patient Profile{% else %}Register New Patient{% endif %}</h3>
+            </div>
+            
+            <div class="card card-custom p-4 border border-0 shadow-sm">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_first_name" class="form-label fw-medium">First Name</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_last_name" class="form-label fw-medium">Last Name</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small mt-1">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="id_age" class="form-label fw-medium">Age</label>
+                            {{ form.age }}
+                            {% if form.age.errors %}
+                                <div class="text-danger small mt-1">{{ form.age.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="id_gender" class="form-label fw-medium">Gender</label>
+                            {{ form.gender }}
+                            {% if form.gender.errors %}
+                                <div class="text-danger small mt-1">{{ form.gender.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="id_phone" class="form-label fw-medium">Phone Number</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="text-danger small mt-1">{{ form.phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_insurance_provider" class="form-label fw-medium">Insurance Provider</label>
+                        {{ form.insurance_provider }}
+                        {% if form.insurance_provider.errors %}
+                            <div class="text-danger small mt-1">{{ form.insurance_provider.errors }}</div>
+                        {% endif %}
+                        <div class="form-text small">Select the patient's primary insurance coverage.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_address" class="form-label fw-medium">Address</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small mt-1">{{ form.address.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-accent px-4 py-2 shadow-sm">
+                        {% if object %}Save Changes{% else %}Register Patient{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

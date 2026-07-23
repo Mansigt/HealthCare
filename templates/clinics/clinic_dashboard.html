@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinic Dashboard - Medical Referral Network{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    {% if not clinic %}
+    <!-- No Clinic Configured Alert -->
+    <div class="row my-4">
+        <div class="col-12">
+            <div class="alert alert-warning border shadow-sm p-4 d-flex align-items-center justify-content-between rounded-3">
+                <div>
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-triangle-exclamation me-2"></i>No Clinic Profile Registered</h5>
+                    <p class="mb-0 text-secondary">You must register your clinic details (specialties, address, wait times, accepted insurances) before doctors can refer patients to you.</p>
+                </div>
+                <a href="{% url 'clinic_add' %}" class="btn btn-warning px-4 py-2 fw-semibold shadow-sm">Register Clinic Now</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Clinic Configured Dashboard -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold m-0 text-dark">{{ clinic.clinic_name }}</h3>
+            <p class="text-muted mb-0"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ clinic.address }}, {{ clinic.city }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'clinic_edit' %}" class="btn btn-outline-secondary shadow-sm"><i class="fa-solid fa-pen-to-square me-1"></i> Edit Profile</a>
+            <a href="{% url 'incoming_referral_list' %}" class="btn btn-accent shadow-sm"><i class="fa-solid fa-list-check me-1"></i> Referrals</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Row -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Total Incoming</span>
+                        <h3 class="fw-bold mt-1 mb-0">{{ total_incoming }}</h3>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 text-primary">
+                        <i class="fa-solid fa-inbox fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Pending Processing</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-warning">{{ pending_incoming }}</h3>
+                    </div>
+                    <div class="bg-warning-subtle p-3 rounded-3 text-warning">
+                        <i class="fa-regular fa-clock fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Wait Time Setting</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-info">{{ clinic.estimated_wait_days }} Days</h3>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 text-info">
+                        <i class="fa-solid fa-hourglass-half fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Completed Referrals</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-success">{{ completed_incoming }}</h3>
+                    </div>
+                    <div class="bg-success-subtle p-3 rounded-3 text-success">
+                        <i class="fa-solid fa-circle-check fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Settings & Charts Row -->
+    <div class="row mb-4">
+        <!-- Quick Wait Time Form -->
+        <div class="col-lg-4 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm bg-white h-100">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock-rotate-left text-info me-2"></i>Update Wait Times</h5>
+                <p class="text-muted small mb-4">Provide accurate estimated wait times so referring doctors see up-to-date queues.</p>
+                
+                <form method="POST" action="{% url 'clinic_wait_time_update' %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label small fw-medium">Estimated Days Wait</label>
+                        {{ wait_time_form.estimated_wait_days }}
+                    </div>
+                    <button type="submit" class="btn btn-accent w-100 py-2 shadow-sm"><i class="fa-solid fa-arrows-rotate me-1"></i> Update Wait Time</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Referral Distribution Chart -->
+        <div class="col-lg-5 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm bg-white h-100">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-pie text-secondary me-2"></i>Referral Distribution</h5>
+                <div style="position: relative; height:200px;">
+                    {% if total_incoming > 0 %}
+                        <canvas id="incomingStatusChart"></canvas>
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                            <p class="small m-0">No incoming referrals to analyze yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Accepted Insurances & Specialties -->
+        <div class="col-lg-3 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm bg-white h-100">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-tags text-success me-2"></i>Clinical Services</h5>
+                
+                <h6 class="fw-semibold text-secondary small mb-2">Specialties</h6>
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    {% for spec in clinic.specialties.all %}
+                        <span class="badge bg-light text-dark border small">{{ spec.name }}</span>
+                    {% empty %}
+                        <span class="text-muted small">None selected</span>
+                    {% endfor %}
+                </div>
+
+                <h6 class="fw-semibold text-secondary small mb-2">Accepted Insurances</h6>
+                <div class="d-flex flex-wrap gap-1">
+                    {% for ins in clinic.insurance_providers.all %}
+                        <span class="badge bg-light text-info border small"><i class="fa-solid fa-shield me-1"></i> {{ ins.provider_name }}</span>
+                    {% empty %}
+                        <span class="text-muted small">None selected</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Incoming Referrals Table -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark m-0"><i class="fa-solid fa-envelope-open-text text-primary me-2"></i>Recent Incoming Referrals</h5>
+                    <a href="{% url 'incoming_referral_list' %}" class="small text-decoration-none">View All</a>
+                </div>
+
+                {% if recent_incoming %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr class="small text-muted">
+                                <th>Referral Date</th>
+                                <th>Referring Doctor</th>
+                                <th>Patient Name</th>
+                                <th>Target Specialty</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in recent_incoming %}
+                            <tr>
+                                <td>{{ referral.created_at|date:"M d, Y" }}</td>
+                                <td>Dr. {{ referral.doctor.first_name }} {{ referral.doctor.last_name }}</td>
+                                <td class="fw-semibold">{{ referral.patient.full_name }}</td>
+                                <td><span class="badge bg-light text-secondary border">{{ referral.specialty.name }}</span></td>
+                                <td>
+                                    {% if referral.status == 'PENDING' %}
+                                        <span class="badge badge-pending">Pending</span>
+                                    {% elif referral.status == 'ACCEPTED' %}
+                                        <span class="badge badge-accepted">Accepted</span>
+                                    {% elif referral.status == 'REJECTED' %}
+                                        <span class="badge badge-rejected">Rejected</span>
+                                    {% elif referral.status == 'COMPLETED' %}
+                                        <span class="badge badge-completed">Completed</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'referral_detail' referral.id %}" class="btn btn-sm btn-light"><i class="fa-solid fa-eye"></i> View</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-folder-open fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small">No incoming referrals have been received yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if clinic and total_incoming > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctxStatus = document.getElementById('incomingStatusChart');
+        if (ctxStatus) {
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ incoming_status_labels|safe }},
+                    datasets: [{
+                        data: {{ incoming_status_data|safe }},
+                        backgroundColor: ['#eab308', '#0284c7', '#ef4444', '#22c55e'],
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

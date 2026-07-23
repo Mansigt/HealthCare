@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Clinics - Medical Referral Network{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <h3 class="fw-bold m-0"><i class="fa-solid fa-hospital-user text-info me-2"></i>Search Clinics</h3>
+        <p class="text-muted mb-0">Find and refer patients to nearby specialized clinics ranked by queue efficiency and distance.</p>
+    </div>
+
+    <!-- Search Filters Card -->
+    <div class="card card-custom p-4 border border-0 shadow-sm mb-4">
+        <form method="GET" id="searchForm">
+            <!-- Hidden inputs for Geolocation coordinates -->
+            <input type="hidden" name="lat" id="id_lat" value="{{ doctor_lat }}">
+            <input type="hidden" name="lng" id="id_lng" value="{{ doctor_lng }}">
+
+            <div class="row align-items-end">
+                <div class="col-md-3 mb-3">
+                    <label for="specialty" class="form-label small fw-medium">Medical Specialty</label>
+                    <select name="specialty" id="specialty" class="form-select">
+                        <option value="">-- All Specialties --</option>
+                        {% for spec in specialties %}
+                            <option value="{{ spec.id }}" {% if selected_specialty == spec.id|stringformat:"i" %}selected{% endif %}>{{ spec.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label for="insurance" class="form-label small fw-medium">Accepted Insurance</label>
+                    <select name="insurance" id="insurance" class="form-select">
+                        <option value="">-- All Insurances --</option>
+                        {% for ins in insurances %}
+                            <option value="{{ ins.id }}" {% if selected_insurance == ins.id|stringformat:"i" %}selected{% endif %}>{{ ins.provider_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label for="city" class="form-label small fw-medium">City</label>
+                    <select name="city" id="city" class="form-select">
+                        <option value="">-- All Cities --</option>
+                        <option value="Bhilai" {% if selected_city == 'Bhilai' %}selected{% endif %}>Bhilai</option>
+                        <option value="Raipur" {% if selected_city == 'Raipur' %}selected{% endif %}>Raipur</option>
+                        <option value="New Delhi" {% if selected_city == 'New Delhi' %}selected{% endif %}>New Delhi</option>
+                        <option value="Gurugram" {% if selected_city == 'Gurugram' %}selected{% endif %}>Gurugram</option>
+                        <option value="Mumbai" {% if selected_city == 'Mumbai' %}selected{% endif %}>Mumbai</option>
+                        <option value="Bangalore" {% if selected_city == 'Bangalore' %}selected{% endif %}>Bangalore</option>
+                        <option value="Chennai" {% if selected_city == 'Chennai' %}selected{% endif %}>Chennai</option>
+                        <option value="Hyderabad" {% if selected_city == 'Hyderabad' %}selected{% endif %}>Hyderabad</option>
+                        <option value="Pune" {% if selected_city == 'Pune' %}selected{% endif %}>Pune</option>
+                        <option value="Vellore" {% if selected_city == 'Vellore' %}selected{% endif %}>Vellore</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-accent py-2 shadow-sm"><i class="fa-solid fa-magnifying-glass me-1"></i> Filter Clinics</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center mt-2 flex-wrap gap-2">
+                <button type="button" id="getLocationBtn" class="btn btn-sm btn-outline-info rounded-3">
+                    <i class="fa-solid fa-location-crosshairs me-1"></i> 
+                    <span id="geoBtnText">{% if has_location %}Location Active (Update){% else %}Sort by Distance (Get Location){% endif %}</span>
+                </button>
+                {% if has_location %}
+                    <span class="text-success small fw-semibold"><i class="fa-solid fa-circle-check"></i> Geolocation sorting enabled ({{ doctor_lat|slice:":6" }}, {{ doctor_lng|slice:":6" }})</span>
+                    <button type="button" id="clearLocationBtn" class="btn btn-link btn-sm text-danger p-0 text-decoration-none ms-2">Disable Geo</button>
+                {% else %}
+                    <span class="text-muted small">Allow location access to rank by nearest distance first.</span>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Ranked Clinics Results List -->
+    <div class="row">
+        {% if clinics %}
+            {% for clinic in clinics %}
+            <div class="col-lg-6 mb-4">
+                <div class="card card-custom h-100 border border-0 shadow-sm p-4 bg-white d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold m-0 text-dark">{{ clinic.clinic_name }}</h5>
+                            <span class="badge bg-light text-info border"><i class="fa-solid fa-hourglass-half"></i> {{ clinic.estimated_wait_days }} Days Wait</span>
+                        </div>
+                        
+                        <p class="text-muted small mb-3"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ clinic.address }}, {{ clinic.city }}</p>
+                        <p class="small mb-3 text-secondary">{{ clinic.description|truncatewords:20 }}</p>
+                        
+                        <div class="mb-3">
+                            <span class="d-block small fw-semibold text-secondary mb-1">Specialties</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for spec in clinic.specialties.all %}
+                                    <span class="badge bg-light text-dark border small">{{ spec.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="d-block small fw-semibold text-secondary mb-1">Insurances</span>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for ins in clinic.insurance_providers.all %}
+                                    <span class="badge bg-light text-info border small"><i class="fa-solid fa-shield me-1"></i> {{ ins.provider_name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if doctor_lat and doctor_lng %}
+                                <span class="text-info small fw-bold"><i class="fa-solid fa-route"></i> Distance: {{ clinic.distance }} km</span>
+                            {% else %}
+                                <span class="text-muted small">Distance unavailable</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'clinic_detail' clinic.id %}" class="btn btn-sm btn-outline-secondary">View Profile</a>
+                            <a href="{% url 'referral_create' %}?clinic={{ clinic.id }}&specialty={{ selected_specialty }}" class="btn btn-sm btn-accent shadow-sm"><i class="fa-solid fa-paper-plane me-1"></i> Refer Patient</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fa-solid fa-circle-info fa-3x text-muted mb-3"></i>
+                <h5>No Clinics Found Matching Filters</h5>
+                <p class="text-muted small">Try broadening your search criteria or selecting a different specialty/insurance network.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const getLocationBtn = document.getElementById("getLocationBtn");
+        const clearLocationBtn = document.getElementById("clearLocationBtn");
+        const latInput = document.getElementById("id_lat");
+        const lngInput = document.getElementById("id_lng");
+        const geoText = document.getElementById("geoBtnText");
+        const searchForm = document.getElementById("searchForm");
+
+        if (getLocationBtn) {
+            getLocationBtn.addEventListener("click", function () {
+                if (navigator.geolocation) {
+                    geoText.innerText = "Retrieving location...";
+                    navigator.geolocation.getCurrentPosition(
+                        function (position) {
+                            latInput.value = position.coords.latitude;
+                            lngInput.value = position.coords.longitude;
+                            geoText.innerText = "Location Active";
+                            // Submit search form with coordinates automatically
+                            searchForm.submit();
+                        },
+                        function (error) {
+                            console.error("Geolocation error: ", error);
+                            alert("Unable to fetch location: " + error.message);
+                            geoText.innerText = "Location Failed";
+                        }
+                    );
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                }
+            });
+        }
+
+        if (clearLocationBtn) {
+            clearLocationBtn.addEventListener("click", function () {
+                latInput.value = "";
+                lngInput.value = "";
+                searchForm.submit();
+            });
+        }
+    });
+</script>
+{% endblock %}

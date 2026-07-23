@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Dashboard - Medical Referral Network{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold m-0 text-dark">Doctor Dashboard</h3>
+            <p class="text-muted mb-0">Overview of your patients and referred clinics</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'patient_add' %}" class="btn btn-outline-secondary shadow-sm"><i class="fa-solid fa-plus me-1"></i> Patient</a>
+            <a href="{% url 'clinic_search' %}" class="btn btn-accent shadow-sm"><i class="fa-solid fa-magnifying-glass me-1"></i> Find Clinics</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Row -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Total Patients</span>
+                        <h3 class="fw-bold mt-1 mb-0">{{ total_patients }}</h3>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 text-info">
+                        <i class="fa-solid fa-hospital-user fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">My Referrals</span>
+                        <h3 class="fw-bold mt-1 mb-0">{{ total_referrals }}</h3>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 text-primary">
+                        <i class="fa-solid fa-share-nodes fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Pending Approvals</span>
+                        <h3 class="fw-bold mt-1 mb-0 text-warning">{{ pending_referrals }}</h3>
+                    </div>
+                    <div class="bg-warning-subtle p-3 rounded-3 text-warning">
+                        <i class="fa-regular fa-clock fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card card-custom p-3 border-0 shadow-sm bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block fw-medium">Total Network Clinics</span>
+                        <h3 class="fw-bold mt-1 mb-0">{{ total_clinics }}</h3>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 text-success">
+                        <i class="fa-solid fa-house-medical fa-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Referral Statistics Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100 bg-white">
+                <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-pie text-secondary me-2"></i>Referral Statistics</h5>
+                <div style="position: relative; height:240px;">
+                    {% if total_referrals > 0 %}
+                        <canvas id="referralStatusChart"></canvas>
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                            <p class="small m-0">No referral data to show yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Wait Times Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100 bg-white">
+                <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-chart-column text-secondary me-2"></i>Clinic Estimated Wait Times (Days)</h5>
+                <div style="position: relative; height:240px;">
+                    {% if wait_time_values %}
+                        <canvas id="waitTimeChart"></canvas>
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                            <p class="small m-0">No clinics registered in the database.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Lists Row -->
+    <div class="row">
+        <!-- Recent Referrals -->
+        <div class="col-lg-7 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark m-0"><i class="fa-solid fa-arrows-split-up-and-left text-primary me-2"></i>Recent Outgoing Referrals</h5>
+                    <a href="{% url 'referral_list' %}" class="small text-decoration-none">View All</a>
+                </div>
+                
+                {% if recent_referrals %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr class="small text-muted">
+                                <th>Patient</th>
+                                <th>Destination Clinic</th>
+                                <th>Specialty</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in recent_referrals %}
+                            <tr>
+                                <td class="fw-medium">{{ referral.patient.full_name }}</td>
+                                <td>{{ referral.clinic.clinic_name }}</td>
+                                <td><span class="badge bg-light text-secondary border">{{ referral.specialty.name }}</span></td>
+                                <td>
+                                    {% if referral.status == 'PENDING' %}
+                                        <span class="badge badge-pending">Pending</span>
+                                    {% elif referral.status == 'ACCEPTED' %}
+                                        <span class="badge badge-accepted">Accepted</span>
+                                    {% elif referral.status == 'REJECTED' %}
+                                        <span class="badge badge-rejected">Rejected</span>
+                                    {% elif referral.status == 'COMPLETED' %}
+                                        <span class="badge badge-completed">Completed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-folder-open fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small">No outgoing referrals recorded.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Patients -->
+        <div class="col-lg-5 mb-4">
+            <div class="card card-custom p-4 border-0 shadow-sm h-100 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark m-0"><i class="fa-solid fa-users text-success me-2"></i>Recently Added Patients</h5>
+                    <a href="{% url 'patient_list' %}" class="small text-decoration-none">View All</a>
+                </div>
+                
+                {% if recent_patients %}
+                <ul class="list-group list-group-flush">
+                    {% for patient in recent_patients %}
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent border-light">
+                        <div>
+                            <a href="{% url 'patient_detail' patient.id %}" class="fw-semibold text-dark text-decoration-none hover-link">{{ patient.full_name }}</a>
+                            <span class="d-block text-muted small">{{ patient.age }} yrs / {{ patient.get_gender_display }}</span>
+                        </div>
+                        <a href="{% url 'referral_create' %}?patient={{ patient.id }}" class="btn btn-sm btn-outline-info rounded-3">Refer</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-user-injured fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small">No patient records registered.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 1. Referral Status Distribution Chart
+        {% if total_referrals > 0 %}
+        const ctxStatus = document.getElementById('referralStatusChart');
+        if (ctxStatus) {
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Accepted', 'Rejected', 'Completed'],
+                    datasets: [{
+                        data: [
+                            {{ pending_referrals }},
+                            {{ accepted_referrals }},
+                            {{ rejected_referrals }},
+                            {{ completed_referrals }}
+                        ],
+                        backgroundColor: ['#eab308', '#0284c7', '#ef4444', '#22c55e'],
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+
+        // 2. Wait Times Chart
+        {% if wait_time_values %}
+        const ctxWait = document.getElementById('waitTimeChart');
+        if (ctxWait) {
+            new Chart(ctxWait, {
+                type: 'bar',
+                data: {
+                    labels: {{ wait_time_labels|safe }},
+                    datasets: [{
+                        label: 'Wait Days',
+                        data: {{ wait_time_values|safe }},
+                        backgroundColor: 'rgba(2, 132, 199, 0.7)',
+                        borderColor: 'rgb(2, 132, 199)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [2, 2]
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %}

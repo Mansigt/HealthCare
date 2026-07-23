@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Edit Referral{% else %}New Referral{% endif %} - Medical Referral Network{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'referral_list' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Cancel</a>
+                <h3 class="fw-bold m-0">{% if object %}Edit Referral Form{% else %}Initiate Patient Referral{% endif %}</h3>
+            </div>
+
+            {% if object and object.status != 'PENDING' %}
+            <div class="alert alert-danger shadow-sm mb-4">
+                <i class="fa-solid fa-circle-xmark me-2"></i> This referral has already been processed by the clinic and can no longer be edited.
+            </div>
+            {% endif %}
+
+            <div class="card card-custom p-4 border border-0 shadow-sm">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_patient" class="form-label fw-medium">Select Patient</label>
+                        {{ form.patient }}
+                        {% if form.patient.errors %}
+                            <div class="text-danger small mt-1">{{ form.patient.errors }}</div>
+                        {% endif %}
+                        <div class="form-text small">Only patients registered under your profile are listed.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_clinic" class="form-label fw-medium">Target Specialist Clinic</label>
+                            {{ form.clinic }}
+                            {% if form.clinic.errors %}
+                                <div class="text-danger small mt-1">{{ form.clinic.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="id_specialty" class="form-label fw-medium">Required Medical Specialty</label>
+                            {{ form.specialty }}
+                            {% if form.specialty.errors %}
+                                <div class="text-danger small mt-1">{{ form.specialty.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_referral_notes" class="form-label fw-medium">Clinical Referral Notes</label>
+                        {{ form.referral_notes }}
+                        {% if form.referral_notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.referral_notes.errors }}</div>
+                        {% endif %}
+                        <div class="form-text small">Describe clinical symptoms, diagnoses, and rationale for specialist advice.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-accent px-4 py-2 shadow-sm" {% if object and object.status != 'PENDING' %}disabled{% endif %}>
+                        {% if object %}Save Referral{% else %}Send Referral{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

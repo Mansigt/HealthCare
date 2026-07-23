@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Referral Detail - Patient: {{ referral.patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% if user.role == 'DOCTOR' %}{% url 'referral_list' %}{% else %}{% url 'incoming_referral_list' %}{% endif %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <h3 class="fw-bold m-0">Referral Request Details</h3>
+    </div>
+
+    <div class="row">
+        <!-- Main details -->
+        <div class="col-lg-8 mb-4">
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-4">
+                    <div>
+                        <span class="text-muted small d-block">Referral ID</span>
+                        <h4 class="fw-bold text-dark m-0">REF-{{ referral.id|stringformat:"06d" }}</h4>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block mb-1 text-end">Current Status</span>
+                        {% if referral.status == 'PENDING' %}
+                            <span class="badge bg-warning text-dark fs-6 py-2 px-3"><i class="fa-regular fa-clock"></i> Pending Clinic Action</span>
+                        {% elif referral.status == 'ACCEPTED' %}
+                            <span class="badge bg-info text-white fs-6 py-2 px-3"><i class="fa-solid fa-check"></i> Accepted & In-Queue</span>
+                        {% elif referral.status == 'REJECTED' %}
+                            <span class="badge bg-danger text-white fs-6 py-2 px-3"><i class="fa-solid fa-xmark"></i> Rejected</span>
+                        {% elif referral.status == 'COMPLETED' %}
+                            <span class="badge bg-success text-white fs-6 py-2 px-3"><i class="fa-solid fa-circle-check"></i> Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="fw-bold text-secondary small uppercase pb-1 mb-2">Clinical Diagnosis / referral notes</h5>
+                    <div class="p-3 bg-light rounded-3 text-secondary border" style="white-space: pre-line; min-height: 120px;">
+                        {% if referral.referral_notes %}
+                            {{ referral.referral_notes }}
+                        {% else %}
+                            <i>No clinical notes were recorded.</i>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <span class="text-muted small d-block">Requested Specialty</span>
+                        <strong class="text-dark fs-6">{{ referral.specialty.name }}</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <span class="text-muted small d-block">Destination Clinic</span>
+                        <a href="{% url 'clinic_detail' referral.clinic.id %}" class="fw-semibold text-dark">{{ referral.clinic.clinic_name }}</a>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <span class="text-muted small d-block">Referring Doctor</span>
+                        <strong class="text-dark">Dr. {{ referral.doctor.first_name }} {{ referral.doctor.last_name }}</strong>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <span class="text-muted small d-block">Submitted Time</span>
+                        <strong class="text-dark">{{ referral.created_at|date:"M d, Y H:i" }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Administrator Action Box -->
+            {% if user.role == 'CLINIC_ADMIN' %}
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-gears text-secondary me-2"></i>Process Referral Action</h5>
+                
+                {% if referral.status == 'PENDING' %}
+                    <p class="text-muted small mb-4">Accepting this referral adds the patient to your active clinical waitlist. Rejecting it notifies the referring physician.</p>
+                    <form method="POST" action="{% url 'referral_process' referral.id %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="accept" class="btn btn-success px-4 py-2 shadow-sm"><i class="fa-solid fa-check me-1"></i> Accept Referral</button>
+                        <button type="submit" name="action" value="reject" class="btn btn-outline-danger px-4 py-2"><i class="fa-solid fa-xmark me-1"></i> Reject Referral</button>
+                    </form>
+                {% elif referral.status == 'ACCEPTED' %}
+                    <p class="text-muted small mb-4">The referral is accepted. Click below once the consultation/procedure is finished to mark it as Completed.</p>
+                    <form method="POST" action="{% url 'referral_process' referral.id %}">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="complete" class="btn btn-accent px-4 py-2 shadow-sm"><i class="fa-solid fa-circle-check me-1"></i> Complete Referral</button>
+                    </form>
+                {% else %}
+                    <p class="text-muted small mb-0">This referral request has been finalized and requires no further actions.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Doctor Edit Box -->
+            {% if user.role == 'DOCTOR' and referral.status == 'PENDING' %}
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-2"><i class="fa-solid fa-pen-to-square text-secondary me-2"></i>Modify Referral</h5>
+                <p class="text-muted small mb-3">Since the referral status is still pending action from the clinic, you can modify its notes and details.</p>
+                <a href="{% url 'referral_edit' referral.id %}" class="btn btn-outline-secondary px-4 py-2 d-inline-block"><i class="fa-solid fa-pen"></i> Edit Referral</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Patient summary -->
+        <div class="col-lg-4 mb-4">
+            <div class="card card-custom border-0 shadow-sm p-4 bg-white h-100">
+                <h5 class="fw-bold text-dark mb-4 border-bottom pb-2"><i class="fa-solid fa-user-injured text-secondary me-2"></i>Patient Information</h5>
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Full Name</span>
+                    <strong class="text-dark">{{ referral.patient.full_name }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Age / Gender</span>
+                    <strong class="text-dark">{{ referral.patient.age }} years / {{ referral.patient.get_gender_display }}</strong>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Insurance Plan</span>
+                    {% if referral.patient.insurance_provider %}
+                        <span class="badge bg-light text-info border"><i class="fa-solid fa-shield me-1"></i> {{ referral.patient.insurance_provider.provider_name }}</span>
+                    {% else %}
+                        <span class="text-muted small">None</span>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Contact Phone</span>
+                    <strong class="text-dark">{{ referral.patient.phone }}</strong>
+                </div>
+                <div class="mb-0">
+                    <span class="text-muted small d-block">Address</span>
+                    <strong class="text-dark">{{ referral.patient.address }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

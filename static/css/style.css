@@ -1,0 +1,34 @@
+/* Custom Stylesheet for Decentralized Medical Clinic Referral Network */
+
+:root {
+    --primary-color: #0f172a;
+    --accent-color: #0284c7;
+    --accent-hover: #0369a1;
+    --bg-light: #f8fafc;
+    --card-border: #e2e8f0;
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+}
+
+/* Hover effect on links */
+.hover-link {
+    transition: color 0.15s ease-in-out;
+}
+.hover-link:hover {
+    color: var(--accent-color) !important;
+}
+
+/* Custom shadow cards */
+.shadow-custom {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.025);
+}
+
+/* Custom rounded inputs */
+.form-control, .form-select {
+    border-radius: 8px;
+    border-color: var(--card-border);
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem rgba(2, 132, 199, 0.15);
+}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Medical Referral Network - Welcome{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <h1 class="display-4 fw-bold text-dark mb-3">Decentralized Clinic Referral Network</h1>
+            <p class="lead text-muted mb-4">Streamline patient referrals between specialized clinics. Search by specialty, insurance, and distance, while optimizing for wait times.</p>
+            <div class="d-flex gap-3">
+                <a href="{% url 'login' %}" class="btn btn-accent btn-lg px-4 shadow-sm">Sign In</a>
+                <a href="{% url 'register' %}" class="btn btn-outline-secondary btn-lg px-4">Register Account</a>
+            </div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <!-- Simulated graphical SVG or styling representing networks -->
+            <div class="p-5 bg-white rounded-4 shadow-sm border text-start">
+                <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-hospital-user me-2"></i>Network Features</h5>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-light p-3 rounded-3 text-info me-3">
+                        <i class="fa-solid fa-clock-rotate-left fa-xl"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Wait Time Optimization</h6>
+                        <p class="small text-muted mb-0">Algorithms automatically prioritize clinics with the lowest estimated wait times.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-light p-3 rounded-3 text-success me-3">
+                        <i class="fa-solid fa-map-location-dot fa-xl"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Location Awareness</h6>
+                        <p class="small text-muted mb-0">Use Geolocation APIs to calculate distance to the nearest specialist instantly.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-start">
+                    <div class="bg-light p-3 rounded-3 text-warning me-3">
+                        <i class="fa-solid fa-clipboard-check fa-xl"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Insurance Matching</h6>
+                        <p class="small text-muted mb-0">Only view clinics that are compatible with your patient's insurance provider.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats summary section -->
+    <div class="row text-center mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom p-4 border border-0 shadow-sm">
+                <h2 class="fw-bold text-primary">0.0 km</h2>
+                <p class="text-muted mb-0">Nearest distance calculations</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom p-4 border border-0 shadow-sm">
+                <h2 class="fw-bold text-success">100%</h2>
+                <p class="text-muted mb-0">HIPAA ready architecture</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom p-4 border border-0 shadow-sm">
+                <h2 class="fw-bold text-info">Real-time</h2>
+                <p class="text-muted mb-0">Wait list updates</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
