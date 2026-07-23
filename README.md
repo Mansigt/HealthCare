@@ -186,6 +186,4 @@ Standard Django save/delete signals cannot audit model "views". To solve this, a
 
 ---
 
-## 📄 License
 
-This project is licensed under the MIT License. Feel free to use and distribute it for learning or demonstration purposes.
